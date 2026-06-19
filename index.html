@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Feliz Cumpleaños Alan 🎁</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Quicksand',sans-serif;touch-action:none}
+
+/* CANVASES */
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#c-matrix{z-index:1}
+#c-stars{z-index:1;display:none}
+#c-particles{z-index:3}
+
+/* EMOJIS */
+#emojis{display:none;position:fixed;inset:0;z-index:10;overflow:hidden;pointer-events:none}
+.ej{position:absolute;bottom:-60px;animation:floatUp linear forwards;user-select:none}
+@keyframes floatUp{
+  0%{transform:translateY(0) rotate(-8deg) scale(.8);opacity:0}
+  10%{opacity:1}85%{opacity:.8}
+  100%{transform:translateY(-115vh) rotate(12deg) scale(1.1);opacity:0}
+}
+
+/* ══════════════════════════════════
+   ALBUM COVER
+══════════════════════════════════ */
+#album-cover{
+  position:fixed;left:50%;bottom:-120%;
+  transform:translateX(-50%) rotate(-2.5deg);
+  width:min(290px,78vw);
+  background:#fff;
+  border-radius:16px 16px 4px 4px;
+  box-shadow:0 12px 50px rgba(255,100,180,.45),0 4px 20px rgba(0,0,0,.6);
+  overflow:hidden;cursor:pointer;z-index:50;
+  transition:bottom .75s cubic-bezier(.34,1.35,.64,1);
+  display:none;
+}
+#album-cover.visible{display:block}
+#album-cover.slide-in{bottom:10%}
+#album-cover.fly-out{
+  bottom:130% !important;
+  transition:bottom .5s cubic-bezier(.6,0,.8,1) !important;
+}
+
+/* Cover top area */
+#cover-top{
+  height:min(200px,52vw);
+  background:linear-gradient(160deg,#fff0f7 0%,#ffe0ef 100%);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;
+  position:relative;overflow:hidden;
+}
+#cover-top::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%, rgba(255,180,220,.3) 0%, transparent 70%);
+}
+#cover-hearts{font-size:clamp(50px,15vw,72px);line-height:1;animation:heartbeat 1.5s ease-in-out infinite}
+@keyframes heartbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+/* Cover bottom */
+#cover-bottom{
+  padding:16px 20px 18px;text-align:center;
+  border-top:2px solid #ffe8f2;
+}
+#cover-bottom h2{
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(20px,6vw,26px);color:#d4507a;margin-bottom:5px;
+}
+#cover-hint{font-size:11px;color:#ccc;letter-spacing:1.5px;animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ══════════════════════════════════
+   ALBUM INSIDE
+══════════════════════════════════ */
+#album-inside{
+  position:fixed;z-index:51;
+  top:50%;left:50%;
+  width:min(350px,92vw);
+  max-height:88vh;
+  transform:translate(-50%,-50%) scale(0) rotate(4deg);
+  transform-origin:center center;
+  opacity:0;
+  transition:transform .5s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+  background:#0d0015;
+  border-radius:18px;
+  border:1px solid rgba(255,150,200,.2);
+  box-shadow:0 0 60px rgba(255,100,180,.3);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+#album-inside.open{
+  transform:translate(-50%,-50%) scale(1) rotate(0deg);
+  opacity:1;
+}
+
+/* Close button */
+#album-close{
+  position:absolute;top:10px;right:12px;z-index:5;
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(255,100,180,.15);border:1px solid rgba(255,100,180,.3);
+  color:rgba(255,150,200,.8);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;flex-shrink:0;
+}
+#album-close:hover{background:rgba(255,100,180,.3)}
+
+/* Scrollable area inside */
+#album-scroll{
+  overflow-y:auto;overflow-x:hidden;
+  flex:1;
+  padding:14px 0 20px;
+  scroll-behavior:smooth;
+}
+#album-scroll::-webkit-scrollbar{width:3px}
+#album-scroll::-webkit-scrollbar-thumb{background:#ff69b4;border-radius:3px}
+
+/* Each page = message + 2 photos */
+.a-page{padding:0 14px 18px;border-bottom:1px solid rgba(255,150,200,.08)}
+.a-page:last-child{border-bottom:none}
+
+/* Message card */
+.msg-card{
+  background:#fff;border-radius:13px;
+  padding:14px 16px;margin-bottom:12px;margin-top:14px;
+  position:relative;
+  box-shadow:0 3px 18px rgba(255,100,180,.12);
+}
+.msg-card::after{content:'💕';position:absolute;top:10px;right:12px;font-size:16px}
+.msg-text{
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(13px,3.8vw,16px);
+  color:#c2604a;line-height:1.65;padding-right:22px;
+}
+
+/* Photo row */
+.photo-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:3px;
+  border-radius:12px;overflow:hidden;
+  border:3px solid #fff;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+.a-photo{
+  width:100%;aspect-ratio:1;object-fit:cover;display:block;
+  background:linear-gradient(135deg,#2a0a2e,#0a0a2a);
+}
+
+/* ══════════════════════════════════
+   HEART COLLAGE
+══════════════════════════════════ */
+#heart-collage{
+  display:none;position:fixed;inset:0;z-index:45;
+  pointer-events:none;
+}
+#heart-collage.show{display:block}
+
+/* Pink glow layer */
+#heart-glow{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:min(340px,85vw);height:min(320px,80vw);
+  border-radius:50%;
+  background:radial-gradient(ellipse, rgba(255,80,180,.18) 0%, transparent 68%);
+  opacity:0;transition:opacity 1.2s;
+  filter:blur(30px);
+}
+#heart-glow.show{opacity:1}
+
+/* Individual photos in heart */
+.h-photo{
+  position:absolute;
+  width:clamp(68px,17vw,84px);height:clamp(68px,17vw,84px);
+  border-radius:9px;
+  border:3px solid #fff;
+  object-fit:cover;
+  background:linear-gradient(135deg,#2a0a2e,#0a0a2a);
+  box-shadow:0 0 12px rgba(255,100,180,.55), 0 0 28px rgba(255,100,180,.18);
+  opacity:0;
+  transform:scale(0) rotate(var(--r));
+  transition:opacity .45s ease, transform .55s cubic-bezier(.34,1.56,.64,1);
+}
+.h-photo.show{opacity:1;transform:scale(1) rotate(var(--r))}
+
+/* ══════════════════════════════════
+   MUSIC BUTTON
+══════════════════════════════════ */
+#music-btn{
+  position:fixed;top:14px;right:14px;z-index:200;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,20,147,.22);
+  border:1px solid rgba(255,105,180,.45);
+  color:#ff69b4;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+#music-btn.spin{animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<canvas id="c-matrix"></canvas>
+<canvas id="c-stars"></canvas>
+<canvas id="c-particles"></canvas>
+<div id="emojis"></div>
+
+<!-- ALBUM COVER -->
+<div id="album-cover" onclick="openAlbum()">
+  <div id="cover-top">
+    <div id="cover-hearts">🎀</div>
+  </div>
+  <div id="cover-bottom">
+    <h2>Para Alan 💌</h2>
+    <div id="cover-hint">✦ toca para abrir ✦</div>
+  </div>
+</div>
+
+<!-- ALBUM INSIDE -->
+<div id="album-inside">
+  <button id="album-close" onclick="closeAlbum()">✕</button>
+  <div id="album-scroll">
+
+    <!-- PÁGINA 1 — cambia los src="" por URLs de tus fotos -->
+    <div class="a-page">
+      <div class="msg-card">
+        <p class="msg-text">Feliz cumpleaños, que este día sea tan especial como vos ❤️</p>
+      </div>
+      <div class="photo-row">
+        <img class="a-photo" src="" alt="Foto 1"/>
+        <img class="a-photo" src="" alt="Foto 2"/>
+      </div>
+    </div>
+
+    <!-- PÁGINA 2 -->
+    <div class="a-page">
+      <div class="msg-card">
+        <p class="msg-text">Gracias por existir y llenar cada día de luz y alegría 🌟</p>
+      </div>
+      <div class="photo-row">
+        <img class="a-photo" src="" alt="Foto 3"/>
+        <img class="a-photo" src="" alt="Foto 4"/>
+      </div>
+    </div>
+
+    <!-- PÁGINA 3 -->
+    <div class="a-page">
+      <div class="msg-card">
+        <p class="msg-text">Sos la persona más increíble que conozco, nunca lo olvides 💖</p>
+      </div>
+      <div class="photo-row">
+        <img class="a-photo" src="" alt="Foto 5"/>
+        <img class="a-photo" src="" alt="Foto 6"/>
+      </div>
+    </div>
+
+    <!-- PÁGINA 4 -->
+    <div class="a-page">
+      <div class="msg-card">
+        <p class="msg-text">Que todos tus sueños se hagan realidad este año y siempre 🌸</p>
+      </div>
+      <div class="photo-row">
+        <img class="a-photo" src="" alt="Foto 7"/>
+        <img class="a-photo" src="" alt="Foto 8"/>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HEART COLLAGE — 14 fotos en forma de corazón -->
+<div id="heart-collage">
+  <div id="heart-glow"></div>
+  <!--
+    Para agregar tus fotos, busca en el JS la variable HEART_SRCS
+    y reemplaza los '' por las URLs de tus imágenes.
+  -->
+</div>
+
+<button id="music-btn" onclick="toggleMusic()">▶</button>
+<audio id="bgAudio" loop src="https://madeforanita.vercel.app/music/happybirtday_uia.mp3"></audio>
+
+<script>
+/* ═══════════════════════════════════════
+   ▼ PERSONALIZACIÓN — editá aquí ▼
+═══════════════════════════════════════ */
+const NOMBRE = 'ALAN';
+
+// URLs de fotos para el CORAZÓN (14 fotos)
+// Reemplazá '' por la URL de cada foto
+const HEART_SRCS = [
+  '', '', '', '', '', '', '',
+  '', '', '', '', '', '', '',
+];
+
+/* ═══════════════════════════════════════
+   CANVAS & RESIZE
+═══════════════════════════════════════ */
+const cvM=document.getElementById('c-matrix'), ctxM=cvM.getContext('2d');
+const cvS=document.getElementById('c-stars'),  ctxS=cvS.getContext('2d');
+const cvP=document.getElementById('c-particles'), ctxP=cvP.getContext('2d');
+let W=innerWidth, H=innerHeight;
+function setSize(){
+  W=innerWidth; H=innerHeight;
+  [cvM,cvS,cvP].forEach(c=>{c.width=W;c.height=H});
+}
+setSize();
+window.addEventListener('resize',setSize);
+
+/* ═══════════════════════════════════════
+   MATRIX RAIN
+═══════════════════════════════════════ */
+const CHARS='HAPPYBIRTHDAY'.split('');
+const COL=15;
+let drops=[], matrixOn=true;
+function initDrops(){
+  drops=[];
+  const n=Math.ceil(W/COL);
+  for(let i=0;i<n;i++) drops.push(-(Math.random()*H));
+}
+initDrops();
+function stepMatrix(){
+  if(!matrixOn) return;
+  ctxM.fillStyle='rgba(0,0,0,0.045)';
+  ctxM.fillRect(0,0,W,H);
+  ctxM.font='13px monospace';
+  for(let i=0;i<drops.length;i++){
+    const x=i*COL;
+    for(let j=0;j<28;j++){
+      const y=drops[i]-j*COL;
+      if(y<-COL||y>H+COL) continue;
+      const ch=CHARS[Math.floor(Math.random()*CHARS.length)];
+      const f=1-j/28;
+      if(j===0)      ctxM.fillStyle=`rgba(255,160,210,${f})`;
+      else if(j<3)   ctxM.fillStyle=`rgba(255,105,180,${f})`;
+      else if(j<10)  ctxM.fillStyle=`rgba(200,0,100,${f*.85})`;
+      else           ctxM.fillStyle=`rgba(120,0,60,${f*.5})`;
+      ctxM.fillText(ch,x,y);
+    }
+    drops[i]+=COL;
+    if(drops[i]>H+350) drops[i]=-(Math.random()*400);
+  }
+}
+const matrixIv=setInterval(stepMatrix,45);
+
+/* ═══════════════════════════════════════
+   PARTICLE SYSTEM
+═══════════════════════════════════════ */
+class Particle{
+  constructor(tx,ty,size){
+    this.tx=tx; this.ty=ty;
+    const a=Math.random()*Math.PI*2;
+    const d=150+Math.random()*Math.max(W,H)*.55;
+    this.x=tx+Math.cos(a)*d; this.y=ty+Math.sin(a)*d;
+    this.size=size*(0.7+Math.random()*.6);
+              this.spd=0.09+Math.random()*.09; 
+    const h=295+Math.random()*55, l=55+Math.random()*30;
+    this.col=`hsl(${h},100%,${l}%)`;
+    this.ex=false; this.vx=0; this.vy=0; this.alpha=1;
+  }
+  update(){
+    if(!this.ex){
+      this.x+=(this.tx-this.x)*this.spd;
+      this.y+=(this.ty-this.y)*this.spd;
+    } else {
+      this.x+=this.vx; this.y+=this.vy;
+      this.vx*=0.92; this.vy*=0.92;
+      this.size*=0.97; this.alpha-=0.018;
+    }
+  }
+  draw(){
+    if(this.alpha<=0||this.size<.2) return;
+    ctxP.save();
+    const g=ctxP.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size*2.2);
+    g.addColorStop(0,this.col); g.addColorStop(1,'transparent');
+    ctxP.globalAlpha=Math.max(0,this.alpha*.25);
+    ctxP.beginPath(); ctxP.arc(this.x,this.y,this.size*2.2,0,Math.PI*2);
+    ctxP.fillStyle=g; ctxP.fill();
+    ctxP.globalAlpha=Math.max(0,this.alpha);
+    ctxP.beginPath(); ctxP.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctxP.fillStyle=this.col; ctxP.fill();
+    ctxP.restore();
+  }
+  explode(){
+    this.ex=true;
+    const a=Math.random()*Math.PI*2, s=2+Math.random()*10;
+    this.vx=Math.cos(a)*s; this.vy=Math.sin(a)*s;
+  }
+}
+
+let parts=[];
+const bgDots=Array.from({length:70},()=>({
+  x:Math.random()*W, y:Math.random()*H,
+  r:1+Math.random()*2.5,
+  vx:(Math.random()-.5)*.4, vy:-.3-Math.random()*.7,
+  a:.1+Math.random()*.35
+}));
+
+function getTargets(text){
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const c=off.getContext('2d');
+  let fs=Math.min(H*.72,280);
+  c.font=`900 ${fs}px 'Arial Black',sans-serif`;
+  while(c.measureText(text).width>W*.88&&fs>18){
+    fs-=2; c.font=`900 ${fs}px 'Arial Black',sans-serif`;
+  }
+  c.fillStyle='#fff'; c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(text,W/2,H/2);
+  const d=c.getImageData(0,0,W,H).data;
+  const gap=Math.max(4,Math.round(fs/30));
+  const pos=[];
+  for(let y=0;y<H;y+=gap)
+    for(let x=0;x<W;x+=gap)
+      if(d[(y*W+x)*4+3]>100) pos.push({x,y});
+  return {pos, pSize:Math.max(2,gap*.6)};
+}
+
+let animOn=false;
+function animLoop(){
+  if(!animOn) return;
+  ctxP.clearRect(0,0,W,H);
+  bgDots.forEach(d=>{
+    d.x+=d.vx; d.y+=d.vy;
+    if(d.y<-5) d.y=H+5;
+    if(d.x<-5) d.x=W+5;
+    if(d.x>W+5) d.x=-5;
+    ctxP.beginPath(); ctxP.arc(d.x,d.y,d.r,0,Math.PI*2);
+    ctxP.fillStyle=`rgba(255,100,180,${d.a})`; ctxP.fill();
+  });
+  parts.forEach(p=>{p.update();p.draw()});
+  requestAnimationFrame(animLoop);
+}
+
+/* ═══════════════════════════════════════
+   SEQUENCE
+═══════════════════════════════════════ */
+const SEQ=['3','2','1','HAPPY','birthday',NOMBRE];
+let si=0;
+          const HOLD=2600, EXPLODE_WAIT=800;
+
+function spawnWord(txt){
+  const {pos,pSize}=getTargets(txt);
+  parts=pos.map(p=>new Particle(p.x,p.y,pSize));
+}
+function explodeAll(){ parts.forEach(p=>p.explode()); }
+
+function runSeq(){
+  if(si>=SEQ.length){
+    explodeAll();
+    setTimeout(()=>{
+      animOn=false;
+      clearInterval(matrixIv);
+      matrixOn=false;
+      ctxM.clearRect(0,0,W,H);
+      startStars();
+    },1100);
+    return;
+  }
+  const word=SEQ[si];
+  if(si===0){
+    spawnWord(word); si++;
+    setTimeout(runSeq,HOLD);
+  } else {
+    explodeAll();
+    setTimeout(()=>{
+      spawnWord(word); si++;
+      setTimeout(runSeq,HOLD);
+    },EXPLODE_WAIT);
+  }
+}
+
+/* ═══════════════════════════════════════
+   STARS PHASE
+═══════════════════════════════════════ */
+function startStars(){
+  cvS.style.display='block';
+  cvS.width=W; cvS.height=H;
+  const stars=Array.from({length:230},()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    r:.4+Math.random()*1.8,
+    ba:.3+Math.random()*.7,
+    ph:Math.random()*Math.PI*2,
+    sp:.012+Math.random()*.028
+  }));
+  let t=0;
+  (function drawS(){
+    ctxS.fillStyle='#00000e';
+    ctxS.fillRect(0,0,W,H);
+    stars.forEach(s=>{
+      const a=s.ba*(.45+.55*Math.sin(t*s.sp+s.ph));
+      ctxS.beginPath(); ctxS.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctxS.fillStyle=`rgba(255,255,255,${a})`; ctxS.fill();
+    });
+    t++; requestAnimationFrame(drawS);
+  })();
+
+  // Floating emojis
+  const ec=document.getElementById('emojis');
+  ec.style.display='block';
+  const EMS=['🎂','🎉','🎈','💖','✨','🌸','🎊','🥳','💕','⭐','🎁','🌟','🍰','💝'];
+  (function spawnE(){
+    const el=document.createElement('div');
+    el.className='ej';
+    el.textContent=EMS[Math.floor(Math.random()*EMS.length)];
+    el.style.left=(Math.random()*96)+'vw';
+    el.style.fontSize=(14+Math.random()*22)+'px';
+    const dur=5+Math.random()*6;
+    el.style.animationDuration=dur+'s';
+    el.style.animationDelay=(Math.random()*.5)+'s';
+    ec.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+1)*1000);
+    setTimeout(spawnE,300+Math.random()*400);
+  })();
+
+  // Show GIF for 2s
+  const gw=document.createElement('div');
+  gw.style.cssText='position:fixed;z-index:20;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .7s';
+  const gimg=document.createElement('img');
+  gimg.src='https://madeforanita.vercel.app/image/happy3.gif';
+  gimg.onerror=function(){this.src='https://media.tenor.com/Kp8MoB3e1CYAAAAC/happy-birthday.gif'};
+  gimg.style.cssText='width:min(180px,46vw);filter:drop-shadow(0 0 20px rgba(255,200,100,.5))';
+  gw.appendChild(gimg);
+  document.body.appendChild(gw);
+
+  // After 2s: fade GIF, show album cover
+  setTimeout(()=>{
+    gw.style.opacity='0';
+    setTimeout(()=>{ gw.remove(); showAlbumCover(); },700);
+  },2200);
+}
+
+/* ═══════════════════════════════════════
+   ALBUM COVER
+═══════════════════════════════════════ */
+function showAlbumCover(){
+  const ac=document.getElementById('album-cover');
+  ac.classList.add('visible');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>ac.classList.add('slide-in')));
+}
+
+function openAlbum(){
+  const ac=document.getElementById('album-cover');
+  const ai=document.getElementById('album-inside');
+  ac.classList.add('fly-out');
+  setTimeout(()=>{
+    ac.style.display='none';
+    ai.classList.add('open');
+  },480);
+}
+
+function closeAlbum(){
+  const ai=document.getElementById('album-inside');
+  ai.classList.remove('open');
+  setTimeout(()=>showHeartCollage(),500);
+}
+
+/* ═══════════════════════════════════════
+   HEART COLLAGE
+═══════════════════════════════════════ */
+function buildHeartCollage(){
+  const hc=document.getElementById('heart-collage');
+  const n=14;
+  const photoSize=Math.min(84, Math.floor(W*0.18));
+  const scale=Math.min((W-photoSize*2-30)/32, (H*0.65)/26);
+  const cx=W/2, cy=H/2;
+
+  for(let i=0;i<n;i++){
+    // Parametric heart, offset start so photos distribute nicely
+    const t=(i/n)*Math.PI*2 - Math.PI/2 + 0.3;
+    const hx=16*Math.pow(Math.sin(t),3);
+    const hy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+    const px=cx + hx*scale - photoSize/2;
+    const py=cy + hy*scale - photoSize/2;
+    const rot=((Math.random()-.5)*16).toFixed(1);
+
+    const img=document.createElement('img');
+    img.className='h-photo';
+    img.src=HEART_SRCS[i]||'';
+    img.alt='Foto '+(i+1);
+    img.style.cssText=`left:${px}px;top:${py}px;width:${photoSize}px;height:${photoSize}px;--r:${rot}deg;transition-delay:${(i*0.065).toFixed(2)}s`;
+    img.onerror=function(){this.style.background='linear-gradient(135deg,#2a0a2e,#0a0a2a)'};
+    hc.appendChild(img);
+  }
+}
+buildHeartCollage();
+
+function showHeartCollage(){
+  const hc=document.getElementById('heart-collage');
+  hc.classList.add('show');
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.h-photo').forEach((el,i)=>{
+      setTimeout(()=>el.classList.add('show'),i*65);
+    });
+    setTimeout(()=>{
+      const gl=document.getElementById('heart-glow');
+      if(gl) gl.classList.add('show');
+    },300);
+  });
+}
+
+/* ═══════════════════════════════════════
+   MUSIC
+═══════════════════════════════════════ */
+const audio=document.getElementById('bgAudio');
+let playing=false;
+function toggleMusic(){
+  const btn=document.getElementById('music-btn');
+  if(playing){ audio.pause(); btn.textContent='▶'; btn.classList.remove('spin'); playing=false; }
+  else { audio.play().catch(()=>{}); btn.textContent='🎶'; btn.classList.add('spin'); playing=true; }
+}
+
+/* ═══════════════════════════════════════
+   START
+═══════════════════════════════════════ */
+setTimeout(()=>{ animOn=true; animLoop(); runSeq(); }, 300);
+</script>
+</body>
+</html>
