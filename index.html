@@ -354,7 +354,7 @@ class Particle{
     const d=150+Math.random()*Math.max(W,H)*.55;
     this.x=tx+Math.cos(a)*d; this.y=ty+Math.sin(a)*d;
     this.size=size*(0.7+Math.random()*.6);
-              this.spd=0.09+Math.random()*.09; 
+              this.spd=0.09+Math.random()*0.22; 
     const h=295+Math.random()*55, l=55+Math.random()*30;
     this.col=`hsl(${h},100%,${l}%)`;
     this.ex=false; this.vx=0; this.vy=0; this.alpha=1;
@@ -438,7 +438,7 @@ function animLoop(){
 ═══════════════════════════════════════ */
 const SEQ=['3','2','1','HAPPY','birthday',NOMBRE];
 let si=0;
-          const HOLD=3000, EXPLODE_WAIT=900;
+          const HOLD=3500, EXPLODE_WAIT=900;
 
 function spawnWord(txt){
   const {pos,pSize}=getTargets(txt);
